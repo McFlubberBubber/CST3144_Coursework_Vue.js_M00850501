@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webstore Project - M00850501</title>
+
+    <!-- Using the CDN link for Vue, and linking to books.js-->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.7.16/dist/vue.js"></script>
+    <script src="js/courses.js"></script>
+
+    <!-- Linking to my CSS -->
+    <link rel="stylesheet" href="css/stylesheet.css">
+
+    <!-- Linking to another stylesheet for checkout logo -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+    integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body>
+    
+    <!-- Creating the div where Vue will mount -->
+    <div id="app">
+        <header class="topHeader">
+            <div class="logo">
+                <h1 v-text="sitename"></h1>
+            </div>
+            <button v-on:click="showCheckout" w:class="['checkout', { 'disabled': cartIsEmpty }]" :disabled="cartIsEmpty"> {{ cartItemCount }}
+            <span class="fa-solid fa-cart-plus"></span> Checkout
+        </button>
+        
+        </header>
+        
+        <div class="content">
+            <!-- Sort Options Section (hidden during checkout) -->
+            <aside class="sortOptions" v-if="!checkoutVisible">
+                <h3 id="filterHeading">Sort:</h3> <br>
+                <ul>
+                    <li><input type="radio" name="sort"/>Subject</li> <br>
+                    <li><input type="radio" name="sort"/>Location</li> <br>
+                    <li><input type="radio" name="sort"/>Price</li> <br>
+                    <li><input type="radio" name="sort"/>Availability</li> <br> <br>
+                </ul>
+                <h3 id="filterHeading">Order:</h3> <br>
+                <ul>
+                    <li><input type="radio" name="order"/>Ascending</li> <br>
+                    <li><input type="radio" name="order"/>Descending</li> <br>
+                </ul>
+            </aside>
+    
+            <!-- Courses Section (hidden during checkout) -->
+            <main class="coursesSection" v-if="!checkoutVisible">
+                <h2 v-text="subHeading" id="subHeadingItem"></h2> <br>
+                <div class="coursesGrid">
+                    <div v-for="course in courses" :key="course.id" class="courseItem">
+                        <div class="courseImage">
+                            <img :src="course.courseImage" :alt="course.subject" />
+                        </div>
+                        <div class="courseDetails">
+                            <div>
+                                <h3>{{ course.subject }}</h3>
+                                <p><strong>Price:</strong> £{{ course.price }}</p>
+                                <p><strong>Location:</strong> {{ course.location }}</p>
+                                <p><strong>Spaces:</strong> {{ course.spaces }}</p>
+                                <p><strong>Available Inventory:</strong>
+                                    <span v-if="course.inventory > 0">
+                                        {{ course.inventory }} 
+                                        <span v-if="course.inventory < 5" style="color: orange;">(Low Stock!)</span>
+                                    </span>
+                                    <span v-else style="color: red;">Out of stock!</span>
+                                </p>
+                            </div>
+                            <button 
+                                v-on:click="addToCart(course)" 
+                                :disabled="course.inventory === 0"
+                                :class="{ 'out-of-stock': course.inventory === 0 }"
+                            >
+                                Add to cart
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+    
+            <!-- Checkout Form (visible during checkout) -->
+            <div v-if="checkoutVisible" class="checkoutForm">
+                <h2>Checkout</h2>
+
+                <p><strong>First Name:</strong><input v-model.trim="order.firstName"/></p>
+                <p><strong>Last Name:</strong><input v-model.trim="order.lastName"/></p>
+                <p><strong>Address:</strong><input v-model="order.address"/></p>
+                <p><strong>City:</strong><input v-model="order.city"/></p>
+
+                <p><strong>State:</strong>
+                    <select v-model="order.state">
+                        <option disabled value="">State</option>
+                        <option v-for="(state, key) in states" :value="state"> {{ key }} </option>
+                    </select>
+                </p>
+    
+                <p><strong>Zip / Postal Code:</strong><input v-model.number="order.zip" type="number"/></p>
+    
+                <p><input type="checkbox" id="gift" value="true" v-model="order.gift"><label for="gift">Ship as gift?</label></p>
+    
+                <p><input type="radio" id="home" value="Home" v-model="order.method">
+                <label for="home">Home</label></p>
+    
+                <p><input type="radio" id="business" value="Business" v-model="order.method">
+                <label for="business">Business</label></p>
+    
+                <button v-on:click="submitForm">Place Order</button>
+            </div>
+        </div>
+
+        <!-- Footer section -->
+        <footer class="footer">
+            <p>Contact Information: Nathaniel Fernandes - M00850501</p>
+        </footer>
+     </div>
+
+     <script type="text/javascript">
+        var bookstore = new Vue({
+            el: '#app',
+            data: {
+                sitename: "Nateson's High School",
+                subHeading: "Order your tuition courses here!",
+                courses: courses,
+                cart: [],
+                checkoutVisible: false,
+                order: {
+                    firstName: '',
+                    lastName: '',
+                    address: '',
+                    city: '',
+                    state: '',
+                    zip: null,
+                    gift: false,
+                    method: 'Home'
+                },
+                states: { "CA": "California", "TX": "Texas", "NY": "New York" }
+            },
+            methods: {
+                addToCart(course) {
+                    if (course.inventory > 0) {
+                        this.cart.push(course);
+                        course.inventory--;
+                        if (course.inventory === 0) {
+                            alert(`${course.subject} is now out of stock!`);
+                        }
+                    }
+                },
+                // Toggle between checkout and home view
+                showCheckout() {
+                    if (this.cart.length > 0 || this.checkoutVisible) {
+                        this.checkoutVisible = !this.checkoutVisible;
+                    }
+                },
+                submitForm() {
+                    alert("Order placed successfully!");
+                    this.checkoutVisible = false;
+                    this.cart = [];
+                    // Reset order form if needed
+                    this.order = {
+                        firstName: '',
+                        lastName: '',
+                        address: '',
+                        city: '',
+                        state: '',
+                        zip: null,
+                        gift: false,
+                        method: 'Home'
+                    };
+                }
+            },
+            computed: {
+                cartItemCount() {
+                    return this.cart.length;
+                },
+                cartIsEmpty() {
+                    return this.cart.length === 0;
+                }
+            }
+
+        });
+    </script>
+    
+</body>
+</html>

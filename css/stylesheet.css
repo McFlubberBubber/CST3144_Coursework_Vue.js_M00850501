@@ -1,0 +1,183 @@
+/* Reset styles for clean layout */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Top header styling */
+.topHeader {
+    background-color: #366cbd;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 40px;
+    font-family: Arial, sans-serif;
+    width: 100vw;
+    box-sizing: border-box;
+    position: fixed;
+    top: 0;
+    z-index: 1000;
+}
+
+/* Centering the logo text */
+.topHeader .logo h1 {
+    text-align: center;
+    font-size: 30px;
+    flex: 1;
+}
+
+/* Style for the checkout button */
+.topHeader .checkout {
+    font-size: 20px;
+    color: white;
+    background-color: #28529b;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.topHeader .checkout:hover {
+    background-color: #1e3f7d;
+}
+
+/* Disabled style for the checkout button */
+.topHeader .checkout:disabled {
+    background-color: grey;
+    color: white;
+    cursor: not-allowed;
+}
+
+
+.topHeader .checkout span {
+    margin-left: 5px;
+}
+
+/* Main content styling */
+.content {
+    display: flex;
+    padding-top: 100px;
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-bottom: 80px; 
+}
+
+/* Sidebar styling for sort options */
+.sortOptions {
+    width: 200px;
+    margin-right: 20px;
+    font-size: 16px;
+    border: 1px solid #366cbd;
+    border-radius: 5px;
+    padding: 20px;
+    margin-top: 20px; 
+}
+
+/* Courses section styling */
+.coursesSection {
+    flex: 1;
+    text-align: center;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.coursesGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+/* Individual course card styling */
+.courseItem {
+    border: 1px solid #366cbd;
+    border-radius: 5px;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+    background-color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+/* Course details and button container */
+.courseDetails {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.courseItem h3 {
+    color: #366cbd;
+}
+
+.courseItem p {
+    margin: 5px 0;
+}
+
+/* Styling for course images */
+.courseImage {
+    height: 100px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+.courseImage img {
+    max-height: 100%;
+    max-width: 100%;
+    object-fit: contain;
+    border: 2px solid; 
+    border-radius: 5px; 
+}
+
+/* Button styling */
+.courseItem button {
+    background-color: #366cbd; 
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+
+.courseItem button:hover {
+    background-color: #23498a; 
+}
+
+/* Styling for the add to cart button being disabled */
+.courseItem button:disabled,
+.courseItem button.out-of-stock {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+/* Footer styling */
+.footer {
+    background-color: #366cbd;
+    color: white;
+    text-align: center;
+    padding: 15px 0;
+    font-size: 16px;
+}
+
+/* Subheading styling */
+#subHeadingItem {
+    font-size: 30px;
+    margin-bottom: 20px;
+}
+
+/* Filter heading styling */
+#filterHeading {
+    color: #366cbd;
+    font-size: 26px;
+}
