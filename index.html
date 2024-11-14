@@ -40,7 +40,7 @@
                     <li><input type="radio" name="sort" value="subject" v-model="sortBy"> Subject</li> <br>
                     <li><input type="radio" name="sort" value="location" v-model="sortBy"> Location</li> <br>
                     <li><input type="radio" name="sort" value="price" v-model="sortBy"> Price</li> <br>
-                    <li><input type="radio" name="sort" value="availability" v-model="sortBy"> Availability</li> <br> <br>
+                    <li><input type="radio" name="sort" value="inventory" v-model="sortBy"> Inventory</li> <br> <br>
                 </ul>
                 <h3 id="filterHeading">Order:</h3> <br>
                 <ul>
@@ -100,6 +100,19 @@
             <div v-if="checkoutVisible" class="checkoutForm">
                 <h2>Checkout Form</h2>
 
+                <!-- Cart Items Display (only in checkout) -->
+                <div v-if="cart.length > 0" class="cartItems">
+                    <h3>Your Cart</h3>
+                    <div v-for="(item, index) in cart" :key="index" class="cartItem">
+                        <p><strong>{{ item.subject }}</strong></p>
+                        <p>Price: £{{ item.price }}</p>
+                        <p>Quantity: {{ item.quantity }}</p>
+                        <button @click="removeFromCart(item)">Remove</button>
+                    </div>
+                </div>
+
+                <button v-if="cartIsEmpty" @click="showCheckout">Continue Shopping</button> <br>
+
                 <p><strong>First Name: </strong><input v-model.trim="order.firstName"/></p>
                 <p><strong>Last Name: </strong><input v-model.trim="order.lastName"/></p>
                 <p><strong>Email: </strong><input v-model.trim="order.email"/></p>
@@ -156,9 +169,22 @@
             methods: {
                 //Function to handle adding each course to cart 
                 addToCart(course) {
-                    if (course.inventory > 0) {
-                        this.cart.push(course);
-                        course.inventory--;
+                    const cartItem = this.cart.find(item => item.id === course.id);
+                    if (cartItem) {
+                        cartItem.quantity++;
+                    } else {
+                        this.cart.push({ ...course, quantity: 1 });
+                    }
+                    course.inventory--; // Decrement inventory
+                },
+                removeFromCart(course) {
+                    const cartItem = this.cart.find(item => item.id === course.id);
+                    if (cartItem) {
+                        cartItem.quantity--;
+                        course.inventory++; // Increment inventory
+                        if (cartItem.quantity === 0) {
+                            this.cart = this.cart.filter(item => item.id !== course.id);
+                        }
                     }
                 },
                 // Toggle between checkout and home view
@@ -202,7 +228,7 @@
             computed: {
                 //To return the total items in cart
                 cartItemCount() {
-                    return this.cart.length;
+                    return this.cart.reduce((total, item) => total + item.quantity, 0);
                 },
                 //Checking if the cart has any items at all
                 cartIsEmpty() {
@@ -210,10 +236,9 @@
                 },
                 sortedCourses() {
                     const sortedCourses = [...this.courses]; // Copy courses array to avoid mutating original data
-                    
                     if (this.sortBy) {
                         sortedCourses.sort((a, b) => {
-                            if (this.sortBy === 'price' || this.sortBy === 'availability') {
+                            if (this.sortBy === 'price' || this.sortBy === 'inventory') {
                                 // Numeric sorting
                                 return this.sortOrder === 'asc' ? a[this.sortBy] - b[this.sortBy] : b[this.sortBy] - a[this.sortBy];
                             } else {

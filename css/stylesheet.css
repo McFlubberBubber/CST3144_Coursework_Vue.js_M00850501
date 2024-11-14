@@ -261,3 +261,34 @@
 .checkoutForm button:hover {
     background-color: #0056b3;
 }
+
+/* Styling for cart items in the checkout */
+.cartItems {
+    margin-bottom: 20px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f0f0f0;
+}
+
+.cartItem {
+    padding: 8px 0;
+    border-bottom: 1px solid #ddd;
+}
+
+.cartItem p {
+    margin: 4px 0;
+}
+
+.cartItem button {
+    background-color: #ff4c4c;
+    color: white;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.cartItem button:hover {
+    background-color: #e04343;
+}
