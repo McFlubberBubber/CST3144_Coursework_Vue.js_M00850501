@@ -26,37 +26,48 @@
             <div class="logo">
                 <h1 v-text="sitename"></h1>
             </div>
-            <button v-on:click="showCheckout" w:class="['checkout', { 'disabled': cartIsEmpty }]" :disabled="cartIsEmpty"> {{ cartItemCount }}
-            <span class="fa-solid fa-cart-plus"></span> Checkout
-        </button>
+            <button v-on:click="showCheckout" :class="['checkout', { 'disabled': cartIsEmpty }]" :disabled="cartIsEmpty">
+                {{ cartItemCount }} <span class="fa-solid fa-cart-plus"></span> Checkout
+            </button>
+            
         
         </header>
-        
         <div class="content">
             <!-- Sort Options Section (hidden during checkout) -->
             <aside class="sortOptions" v-if="!checkoutVisible">
                 <h3 id="filterHeading">Sort:</h3> <br>
                 <ul>
-                    <li><input type="radio" name="sort"/>Subject</li> <br>
-                    <li><input type="radio" name="sort"/>Location</li> <br>
-                    <li><input type="radio" name="sort"/>Price</li> <br>
-                    <li><input type="radio" name="sort"/>Availability</li> <br> <br>
+                    <li><input type="radio" name="sort" value="subject" v-model="sortBy"> Subject</li> <br>
+                    <li><input type="radio" name="sort" value="location" v-model="sortBy"> Location</li> <br>
+                    <li><input type="radio" name="sort" value="price" v-model="sortBy"> Price</li> <br>
+                    <li><input type="radio" name="sort" value="availability" v-model="sortBy"> Availability</li> <br> <br>
                 </ul>
                 <h3 id="filterHeading">Order:</h3> <br>
                 <ul>
-                    <li><input type="radio" name="order"/>Ascending</li> <br>
-                    <li><input type="radio" name="order"/>Descending</li> <br>
+                    <li><input type="radio" name="order" value="asc" v-model="sortOrder"> Ascending</li> <br>
+                    <li><input type="radio" name="order" value="desc" v-model="sortOrder"> Descending</li> <br>
                 </ul>
             </aside>
+            
     
             <!-- Courses Section (hidden during checkout) -->
             <main class="coursesSection" v-if="!checkoutVisible">
+
+                <!-- Div for search bar -->
+                <div class="searchBar">
+                    <input type="text" placeholder="Search for a course..." v-model="searchInput">
+                    <button @click="executeSearch">Search</button>
+                </div>
+
                 <h2 v-text="subHeading" id="subHeadingItem"></h2> <br>
+
+                <!-- Div to display the courses in a grid -->
                 <div class="coursesGrid">
-                    <div v-for="course in courses" :key="course.id" class="courseItem">
+                    <div v-for="course in sortedCourses" :key="course.id" class="courseItem">
                         <div class="courseImage">
                             <img :src="course.courseImage" :alt="course.subject" />
                         </div>
+                        <!-- Setting the display for each course's div-->
                         <div class="courseDetails">
                             <div>
                                 <h3>{{ course.subject }}</h3>
@@ -74,8 +85,7 @@
                             <button 
                                 v-on:click="addToCart(course)" 
                                 :disabled="course.inventory === 0"
-                                :class="{ 'out-of-stock': course.inventory === 0 }"
-                            >
+                                :class="{ 'out-of-stock': course.inventory === 0 }">
                                 Add to cart
                             </button>
                         </div>
@@ -121,6 +131,9 @@
                 sitename: "Nateson's High School",
                 subHeading: "Order your tuition courses here!",
                 courses: courses,
+                searchInput: '',
+                sortBy: '',
+                sortOrder: 'asc',
                 cart: [],
                 checkoutVisible: false,
                 order: {
@@ -134,6 +147,7 @@
                 },
             },
             methods: {
+                //Function to handle adding each course to cart 
                 addToCart(course) {
                     if (course.inventory > 0) {
                         this.cart.push(course);
@@ -146,6 +160,7 @@
                         this.checkoutVisible = !this.checkoutVisible;
                     }
                 },
+                //Function to handle submission of form
                 submitForm() {
                     this.checkoutVisible = false;
                     this.cart = [];
@@ -160,17 +175,40 @@
                         gift: false,
                         method: 'Home'
                     };
+                },
+                executeSearch() {
+                    alert("Searched item: " + this.searchInput);
                 }
             },
             computed: {
+                //To return the total items in cart
                 cartItemCount() {
                     return this.cart.length;
                 },
+                //Checking if the cart has any items at all
                 cartIsEmpty() {
                     return this.cart.length === 0;
+                },
+                sortedCourses() {
+                    const sortedCourses = [...this.courses]; // Copy courses array to avoid mutating original data
+                    
+                    if (this.sortBy) {
+                        sortedCourses.sort((a, b) => {
+                            if (this.sortBy === 'price' || this.sortBy === 'availability') {
+                                // Numeric sorting
+                                return this.sortOrder === 'asc' ? a[this.sortBy] - b[this.sortBy] : b[this.sortBy] - a[this.sortBy];
+                            } else {
+                                // String sorting
+                                if (a[this.sortBy] < b[this.sortBy]) return this.sortOrder === 'asc' ? -1 : 1;
+                                if (a[this.sortBy] > b[this.sortBy]) return this.sortOrder === 'asc' ? 1 : -1;
+                                return 0;
+                            }
+                        });
+                    }
+
+                    return sortedCourses;
                 }
             }
-
         });
     </script>
     
