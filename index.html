@@ -73,7 +73,10 @@
                                 <h3>{{ course.subject }}</h3>
                                 <p><strong>Price:</strong> £{{ course.price }}</p>
                                 <p><strong>Location:</strong> {{ course.location }}</p>
-                                <p><strong>Spaces:</strong> {{ course.spaces }}</p>
+                                <p><strong>Spaces:</strong>
+                                    {{ course.spaces }}
+                                    <span v-if="course.spaces === 0" style="color: red;">No spaces left!</span>
+                                </p>
                                 <p><strong>Available Inventory:</strong>
                                     <span v-if="course.inventory > 0">
                                         {{ course.inventory }} 
@@ -84,7 +87,7 @@
                             </div>
                             <button 
                                 v-on:click="addToCart(course)" 
-                                :disabled="course.inventory === 0"
+                                :disabled="course.inventory === 0 || course.spaces === 0"
                                 :class="{ 'out-of-stock': course.inventory === 0 }">
                                 Add to cart
                             </button>
