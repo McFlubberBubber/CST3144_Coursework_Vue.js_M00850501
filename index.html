@@ -92,11 +92,6 @@
                 <p><strong>Address:</strong><input v-model="order.address"/></p>
                 <p><strong>City:</strong><input v-model="order.city"/></p>
 
-                <p><strong>State:</strong>
-                    <select v-model="order.state">
-                        <option disabled value="">State</option>
-                        <option v-for="(state, key) in states" :value="state"> {{ key }} </option>
-                    </select>
                 </p>
     
                 <p><strong>Zip / Postal Code:</strong><input v-model.number="order.zip" type="number"/></p>
@@ -133,21 +128,16 @@
                     lastName: '',
                     address: '',
                     city: '',
-                    state: '',
                     zip: null,
                     gift: false,
                     method: 'Home'
                 },
-                states: { "CA": "California", "TX": "Texas", "NY": "New York" }
             },
             methods: {
                 addToCart(course) {
                     if (course.inventory > 0) {
                         this.cart.push(course);
                         course.inventory--;
-                        if (course.inventory === 0) {
-                            alert(`${course.subject} is now out of stock!`);
-                        }
                     }
                 },
                 // Toggle between checkout and home view
@@ -157,7 +147,6 @@
                     }
                 },
                 submitForm() {
-                    alert("Order placed successfully!");
                     this.checkoutVisible = false;
                     this.cart = [];
                     // Reset order form if needed
