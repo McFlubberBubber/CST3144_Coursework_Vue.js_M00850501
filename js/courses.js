@@ -22,7 +22,7 @@ let courses = [
         "subject": "Science",
         "location": "Oxford",
         "price": 100.00,
-        "spaces": 10,
+        "spaces": 0,
         "inventory": 3,
         "courseImage": "./images/ScienceIMG.png"
     },
@@ -58,7 +58,7 @@ let courses = [
         "subject": "English 2",
         "location": "London",
         "price": 100.00,
-        "spaces": 5,
+        "spaces": 0,
         "inventory": 9,
         "courseImage": "./images/EnglishIMG.png"
     },
