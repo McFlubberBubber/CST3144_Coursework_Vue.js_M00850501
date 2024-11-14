@@ -95,14 +95,12 @@
     
             <!-- Checkout Form (visible during checkout) -->
             <div v-if="checkoutVisible" class="checkoutForm">
-                <h2>Checkout</h2>
+                <h2>Checkout Form</h2>
 
-                <p><strong>First Name:</strong><input v-model.trim="order.firstName"/></p>
-                <p><strong>Last Name:</strong><input v-model.trim="order.lastName"/></p>
-                <p><strong>Address:</strong><input v-model="order.address"/></p>
-                <p><strong>City:</strong><input v-model="order.city"/></p>
-
-                </p>
+                <p><strong>First Name: </strong><input v-model.trim="order.firstName"/></p>
+                <p><strong>Last Name: </strong><input v-model.trim="order.lastName"/></p>
+                <p><strong>Email: </strong><input v-model.trim="order.email"/></p>
+                <p><strong>Address: </strong><input v-model="order.address"/></p>
     
                 <p><strong>Zip / Postal Code:</strong><input v-model.number="order.zip" type="number"/></p>
     
@@ -114,7 +112,12 @@
                 <p><input type="radio" id="business" value="Business" v-model="order.method">
                 <label for="business">Business</label></p>
     
-                <button v-on:click="submitForm">Place Order</button>
+                <button v-on:click="submitForm($event)">Place Order</button>
+                <p v-if="checkoutFeedback" :style="{ color: checkoutFeedback.type === 'success' ? 'green' : 'red' }" style="text-align: center;">
+                    {{ checkoutFeedback.message }}
+                </p>
+                
+
             </div>
         </div>
 
@@ -139,12 +142,13 @@
                 order: {
                     firstName: '',
                     lastName: '',
+                    email: '',
                     address: '',
-                    city: '',
                     zip: null,
                     gift: false,
                     method: 'Home'
                 },
+                checkoutFeedback: false,
             },
             methods: {
                 //Function to handle adding each course to cart 
@@ -162,19 +166,31 @@
                 },
                 //Function to handle submission of form
                 submitForm() {
-                    this.checkoutVisible = false;
-                    this.cart = [];
-                    // Reset order form if needed
-                    this.order = {
-                        firstName: '',
-                        lastName: '',
-                        address: '',
-                        city: '',
-                        state: '',
-                        zip: null,
-                        gift: false,
-                        method: 'Home'
-                    };
+                    event.preventDefault();
+                    // Check if any of the required fields are empty
+                    if (!this.order.firstName || !this.order.lastName || !this.order.email || !this.order.address || !this.order.zip) {
+                            // Show error message if any field is empty
+                            this.checkoutFeedback = { message: "All fields must be filled in!", type: "error" };
+                        } else {
+                        // Hide error message if all fields are filled
+                        this.checkoutFeedback = { message: "Order placed successfully! Redirecting back to home page...", type: "success" };
+
+                        setTimeout(() => {
+                            this.checkoutFeedback = false;
+                            this.checkoutVisible = false;
+                            this.cart = [];
+                            // Reset order form
+                            this.order = {
+                            firstName: '',
+                            lastName: '',
+                            email: '',
+                            address: '',
+                            zip: null,
+                            gift: false,
+                            method: 'Home',
+                        };
+                        }, 2000);
+                    }
                 },
                 executeSearch() {
                     alert("Searched item: " + this.searchInput);

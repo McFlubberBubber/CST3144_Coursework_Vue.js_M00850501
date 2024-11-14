@@ -219,3 +219,45 @@
 .searchBar button:hover {
     background-color: #0056b3;
 }
+
+/* Styling for the checkout form */
+.checkoutForm {
+    max-width: 700px;
+    margin: 0 auto; 
+    padding: 40px; 
+    border: 1px solid #ddd; 
+    border-radius: 10px; 
+    background-color: #f9f9f9; 
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); 
+}
+
+/*Styling for the checkout form header */
+.checkoutForm h2 {
+    text-align: center;
+    font-size: 32px; 
+    margin-bottom: 30px; 
+}
+
+/*Adjusting space between each field*/
+.checkoutForm p {
+    margin: 20px 0;
+}
+
+/*Styling for the place order button*/
+.checkoutForm button {
+    width: 100%;
+    padding: 14px; 
+    font-size: 22px; 
+    color: #fff;
+    background-color: #007bff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: background-color 0.3s ease;
+}
+
+/*Hover effect for buttom*/
+.checkoutForm button:hover {
+    background-color: #0056b3;
+}
