@@ -235,23 +235,37 @@
                     return this.cart.length === 0;
                 },
                 sortedCourses() {
-                    const sortedCourses = [...this.courses]; // Copy courses array to avoid mutating original data
+                    // First filter courses based on search input
+                    const filtered = this.filteredCourses;
+
+                    // Then sort the filtered results based on the selected sort option
                     if (this.sortBy) {
-                        sortedCourses.sort((a, b) => {
+                        filtered.sort((a, b) => {
                             if (this.sortBy === 'price' || this.sortBy === 'inventory') {
-                                // Numeric sorting
                                 return this.sortOrder === 'asc' ? a[this.sortBy] - b[this.sortBy] : b[this.sortBy] - a[this.sortBy];
                             } else {
-                                // String sorting
                                 if (a[this.sortBy] < b[this.sortBy]) return this.sortOrder === 'asc' ? -1 : 1;
                                 if (a[this.sortBy] > b[this.sortBy]) return this.sortOrder === 'asc' ? 1 : -1;
                                 return 0;
                             }
                         });
                     }
+                    return filtered;
+                },
 
-                    return sortedCourses;
-                }
+                filteredCourses() {
+                    return this.courses.filter(course => {
+                        const searchTerm = this.searchInput.toLowerCase();
+                        // Check if the search term is in any of the course's attributes
+                        return (
+                            course.subject.toLowerCase().includes(searchTerm) ||
+                            course.location.toLowerCase().includes(searchTerm) ||
+                            course.price.toString().includes(searchTerm) ||
+                            course.spaces.toString().includes(searchTerm) ||
+                            course.inventory.toString().includes(searchTerm)
+                        );
+                    });
+                },
             }
         });
     </script>
