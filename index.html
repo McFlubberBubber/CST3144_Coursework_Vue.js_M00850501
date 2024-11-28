@@ -40,7 +40,7 @@
                     <li><input type="radio" name="sort" value="subject" v-model="sortBy"> Subject</li> <br>
                     <li><input type="radio" name="sort" value="location" v-model="sortBy"> Location</li> <br>
                     <li><input type="radio" name="sort" value="price" v-model="sortBy"> Price</li> <br>
-                    <li><input type="radio" name="sort" value="inventory" v-model="sortBy"> Inventory</li> <br> <br>
+                    <li><input type="radio" name="sort" value="spaces" v-model="sortBy"> Spaces</li> <br> <br>
                 </ul>
                 <h3 id="filterHeading">Order:</h3> <br>
                 <ul>
@@ -49,7 +49,6 @@
                 </ul>
             </aside>
             
-    
             <!-- Courses Section (hidden during checkout) -->
             <main class="coursesSection" v-if="!checkoutVisible">
 
@@ -77,20 +76,13 @@
                                     {{ course.spaces }}
                                     <span v-if="course.spaces === 0" style="color: red;">No spaces left!</span>
                                 </p>
-                                <p><strong>Available Inventory:</strong>
-                                    <span v-if="course.inventory > 0">
-                                        {{ course.inventory }} 
-                                        <span v-if="course.inventory < 5" style="color: orange;">(Low Stock!)</span>
-                                    </span>
-                                    <span v-else style="color: red;">Out of stock!</span>
-                                </p>
                             </div>
                             <button 
                                 v-on:click="addToCart(course)" 
-                                :disabled="course.inventory === 0 || course.spaces === 0"
-                                :class="{ 'out-of-stock': course.inventory === 0 }">
+                                :disabled="course.spaces === 0"
+                                :class="{ 'out-of-stock': course.spaces === 0 }">
                                 Add to cart
-                            </button>
+                        </button>
                         </div>
                     </div>
                 </div>
@@ -111,23 +103,24 @@
                     </div>
                 </div>
 
+                <!-- If there are no items in the cart, a new button will appear for the user to go back to the main page -->
                 <button v-if="cartIsEmpty" @click="showCheckout">Continue Shopping</button> <br>
 
+                <!-- Checkout form -->
                 <p><strong>First Name: </strong><input v-model.trim="order.firstName"/></p>
                 <p><strong>Last Name: </strong><input v-model.trim="order.lastName"/></p>
                 <p><strong>Email: </strong><input v-model.trim="order.email"/></p>
+                <p><strong>Phone Number: </strong><input v-model.trim="order.phoneNumber"/></p>
                 <p><strong>Address: </strong><input v-model="order.address"/></p>
-    
                 <p><strong>Zip / Postal Code:</strong><input v-model.number="order.zip" type="number"/></p>
-    
                 <p><input type="checkbox" id="gift" value="true" v-model="order.gift"><label for="gift">Ship as gift?</label></p>
-    
                 <p><input type="radio" id="home" value="Home" v-model="order.method">
                 <label for="home">Home</label></p>
     
                 <p><input type="radio" id="business" value="Business" v-model="order.method">
                 <label for="business">Business</label></p>
     
+                <!-- Button with checkout feedback to display status of order to the user (validation) -->
                 <button v-on:click="submitForm($event)">Place Order</button>
                 <p v-if="checkoutFeedback" :style="{ color: checkoutFeedback.type === 'success' ? 'green' : 'red' }" style="text-align: center;">
                     {{ checkoutFeedback.message }}
@@ -143,6 +136,7 @@
         </footer>
      </div>
 
+     <!-- Using javascript to create the Vue instance -->
      <script type="text/javascript">
         var bookstore = new Vue({
             el: '#app',
@@ -175,13 +169,19 @@
                     } else {
                         this.cart.push({ ...course, quantity: 1 });
                     }
-                    course.inventory--; // Decrement inventory
+                    // Decrement spaces only on the main `courses` array
+                    const originalCourse = this.courses.find(item => item.id === course.id);
+                    if (originalCourse.spaces > 0) originalCourse.spaces--;
                 },
+
+                //Function to remove items from the checkout cart
                 removeFromCart(course) {
                     const cartItem = this.cart.find(item => item.id === course.id);
                     if (cartItem) {
                         cartItem.quantity--;
-                        course.inventory++; // Increment inventory
+                        // Increment spaces only on the main `courses` array
+                        const originalCourse = this.courses.find(item => item.id === course.id);
+                        originalCourse.spaces++;
                         if (cartItem.quantity === 0) {
                             this.cart = this.cart.filter(item => item.id !== course.id);
                         }
@@ -204,6 +204,7 @@
                         // Hide error message if all fields are filled
                         this.checkoutFeedback = { message: "Order placed successfully! Redirecting back to home page...", type: "success" };
 
+                        //Setting a timeout when the user successfully places order to process it
                         setTimeout(() => {
                             this.checkoutFeedback = false;
                             this.checkoutVisible = false;
@@ -213,6 +214,7 @@
                             firstName: '',
                             lastName: '',
                             email: '',
+                            phoneNumber: '',
                             address: '',
                             zip: null,
                             gift: false,
@@ -221,6 +223,7 @@
                         }, 2000);
                     }
                 },
+                //Alert for searched input
                 executeSearch() {
                     alert("Searched item: " + this.searchInput);
                 }
@@ -241,7 +244,7 @@
                     // Then sort the filtered results based on the selected sort option
                     if (this.sortBy) {
                         filtered.sort((a, b) => {
-                            if (this.sortBy === 'price' || this.sortBy === 'inventory') {
+                            if (this.sortBy === 'price' || this.sortBy === 'spaces') {
                                 return this.sortOrder === 'asc' ? a[this.sortBy] - b[this.sortBy] : b[this.sortBy] - a[this.sortBy];
                             } else {
                                 if (a[this.sortBy] < b[this.sortBy]) return this.sortOrder === 'asc' ? -1 : 1;
@@ -253,6 +256,7 @@
                     return filtered;
                 },
 
+                //Function for filtering courses
                 filteredCourses() {
                     return this.courses.filter(course => {
                         const searchTerm = this.searchInput.toLowerCase();
@@ -261,8 +265,7 @@
                             course.subject.toLowerCase().includes(searchTerm) ||
                             course.location.toLowerCase().includes(searchTerm) ||
                             course.price.toString().includes(searchTerm) ||
-                            course.spaces.toString().includes(searchTerm) ||
-                            course.inventory.toString().includes(searchTerm)
+                            course.spaces.toString().includes(searchTerm)
                         );
                     });
                 },
