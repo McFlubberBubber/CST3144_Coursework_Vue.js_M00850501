@@ -29,7 +29,6 @@
                 {{ cartItemCount }} <span class="fa-solid fa-cart-plus"></span> Checkout
             </button>
             
-        
         </header>
         <div class="content">
             <!-- Sort Options Section (hidden during checkout) -->
@@ -58,6 +57,8 @@
                 </div>
 
                 <h2 v-text="subHeading" id="subHeadingItem"></h2> <br>
+                <button @click="fetchProducts">Fetch Courses</button>
+
 
                 <!-- Div to display the courses in a grid -->
                 <div class="coursesGrid">
