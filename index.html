@@ -57,8 +57,6 @@
                 </div>
 
                 <h2 v-text="subHeading" id="subHeadingItem"></h2> <br>
-                <button @click="fetchProducts">Fetch Courses</button>
-
 
                 <!-- Div to display the courses in a grid -->
                 <div class="coursesGrid">
@@ -164,6 +162,10 @@
                 coursesURL: "collections/courses",
                 ordersURL: "collections/orders"
             },
+            mounted() {
+                console.log("Vue instance mounted, calling fetchProducts");
+                this.fetchProducts();
+            },
             methods: {
                 //Function to handle adding each course to cart 
                 addToCart(course) {
@@ -191,6 +193,7 @@
                         }
                     }
                 },
+                //Function to fetch all products
                 async fetchProducts() {
                     console.log("Fetching courses from:", `${this.serverBaseURL}/collections/courses`);
                     try {
