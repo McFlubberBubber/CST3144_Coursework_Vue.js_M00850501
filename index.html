@@ -111,12 +111,6 @@
                 <p><strong>Phone Number: </strong><input v-model.trim="order.phoneNumber"/></p>
                 <p><strong>Address: </strong><input v-model="order.address"/></p>
                 <p><strong>Zip / Postal Code:</strong><input v-model.number="order.zip" type="number"/></p>
-                <p><input type="checkbox" id="gift" value="true" v-model="order.gift"><label for="gift">Ship as gift?</label></p>
-                <p><input type="radio" id="home" value="Home" v-model="order.method">
-                <label for="home">Home</label></p>
-    
-                <p><input type="radio" id="business" value="Business" v-model="order.method">
-                <label for="business">Business</label></p>
     
                 <!-- Button with checkout feedback to display status of order to the user (validation) -->
                 <button v-on:click="submitForm($event)">Place Order</button>
@@ -151,10 +145,9 @@
                     firstName: '',
                     lastName: '',
                     email: '',
+                    phoneNumber: '',
                     address: '',
                     zip: null,
-                    gift: false,
-                    method: 'Home'
                 },
                 checkoutFeedback: false,
                 imagesBaseURL: "https://natesonhighschool-webstore-m00850501.onrender.com",
@@ -246,16 +239,84 @@
                             phoneNumber: '',
                             address: '',
                             zip: null,
-                            gift: false,
-                            method: 'Home',
                         };
                         }, 2000);
                     }
                 },
-                //Alert for searched input
-                executeSearch() {
-                    alert("Searched item: " + this.searchInput);
-                }
+                async placeOrder() {
+                    const orderDetails = {
+                        user: {
+                        firstName: this.order.firstName,
+                        lastName: this.order.lastName,
+                        email: this.order.email,
+                        phoneNumber: this.order.phoneNumber,
+                        address: this.order.address,
+                        zip: this.order.zip,
+                        },
+                        orderedItems: this.cart.map(item => ({
+                        id: item.id,
+                        quantity: item.quantity,
+                        })),
+                    };
+                    try {
+                        // POST Order
+                        const orderResponse = await fetch(`${this.serverBaseURL}/collections/orders`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify(orderDetails),
+                        });
+
+                        if (orderResponse.ok) {
+                        // Update Course Spaces
+                        for (const item of this.cart) {
+                            const updatedSpaces = item.spaces - item.quantity;
+                            
+                            const updateResponse = await fetch(
+                            `${this.serverBaseURL}/collections/courses/${item.id}`,
+                            {
+                                method: "PUT",
+                                headers: {
+                                "Content-Type": "application/json",
+                                },
+                                body: JSON.stringify({ spaces: updatedSpaces }),
+                            }
+                            );
+                            if (!updateResponse.ok) {
+                            throw new Error("Failed to update course spaces");
+                            }
+                        }
+
+                        this.checkoutFeedback = {
+                            message: "Order placed successfully and courses updated!",
+                            type: "success",
+                        };
+
+                        // Reset cart and form after successful checkout
+                        this.resetCheckout();
+                        } else {
+                        throw new Error("Failed to place order");
+                        }
+                    } catch (error) {
+                        console.error(error);
+                        this.checkoutFeedback = { message: "Error placing order", type: "error" };
+                    }
+                    },
+
+                    resetCheckout() {
+                    this.checkoutVisible = false;
+                    this.cart = [];
+                    this.order = {
+                        firstName: '',
+                        lastName: '',
+                        email: '',
+                        phoneNumber: '',
+                        address: '',
+                        zip: null,
+                    };
+                    }
+
             },
             computed: {
                 //To return the total items in cart
@@ -284,7 +345,6 @@
                     }
                     return filtered;
                 },
-
                 //Function for filtering courses
                 filteredCourses() {
                     return this.courses.filter(course => {
