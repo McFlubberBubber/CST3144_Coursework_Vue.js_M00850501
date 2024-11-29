@@ -198,7 +198,7 @@
                     const json = await response.json();
                     this.courses = json.map(course => ({
                         ...course,
-                        image: `${this.serverBaseURL}/Images/${course.courseImage}`,
+                        courseImage: `${this.imagesBaseURL}/Images/${course.courseImage}`,
                     }));
                     } else {
                     console.error("Failed to fetch products:", response.status);
