@@ -162,27 +162,50 @@
             methods: {
                 //Function to handle adding each course to cart 
                 addToCart(course) {
-                    const cartItem = this.cart.find(item => item.id === course.id);
-                    if (cartItem) {
-                        cartItem.quantity++;
-                    } else {
-                        this.cart.push({ ...course, quantity: 1 });
-                    }
-                    // Decrement spaces only on the main `courses` array
-                    const originalCourse = this.courses.find(item => item.id === course.id);
-                    if (originalCourse.spaces > 0) originalCourse.spaces--;
-                },
+                    console.log("Adding to cart:", course); // Log the clicked course object
 
+                    // If the course is a reactive object, access the 'id' and 'spaces' properly
+                    const courseId = course._id;  // This is the unique identifier for the course
+                    const originalCourse = this.courses.find((c) => c._id === courseId);  // Ensure correct comparison of IDs
+
+                    if (originalCourse) {
+                        // Ensure the original course object is reactive and tracked by Vue
+                        if (originalCourse.spaces > 0) {
+                            const cartItem = this.cart.find((c) => c._id === courseId);
+                            // If the course is already in the cart, increase the quantity
+                            if (cartItem) {
+                                cartItem.quantity++;
+                            } else {
+                                // If it's a new course, add it to the cart with quantity 1
+                                this.cart.push({ ...course, quantity: 1 });
+                            }
+                            // Update the spaces of the original course in the courses array
+                            originalCourse.spaces--;  
+                            console.log("Updated course spaces:", originalCourse.spaces);
+                        } else {
+                            console.log("Course is out of stock.");
+                        }
+                    }
+                },
                 //Function to remove items from the checkout cart
                 removeFromCart(course) {
-                    const cartItem = this.cart.find(item => item.id === course.id);
+                    // Use _id to compare, as that's how the course is identified
+                    const cartItem = this.cart.find(item => item._id === course._id);
+                    
                     if (cartItem) {
-                        cartItem.quantity--;
-                        // Increment spaces only on the main `courses` array
-                        const originalCourse = this.courses.find(item => item.id === course.id);
-                        originalCourse.spaces++;
+                        cartItem.quantity--; // Decrease the quantity of the cart item
+                        
+                        // Find the original course based on _id
+                        const originalCourse = this.courses.find(item => item._id === course._id);
+                        
+                        // Increase the spaces in the original course when the item is removed
+                        if (originalCourse) {
+                            originalCourse.spaces++;
+                        }
+                        
+                        // If the quantity of the item in the cart reaches 0, remove it
                         if (cartItem.quantity === 0) {
-                            this.cart = this.cart.filter(item => item.id !== course.id);
+                            this.cart = this.cart.filter(item => item._id !== course._id);
                         }
                     }
                 },
@@ -220,32 +243,29 @@
                     event.preventDefault();
                     // Check if any of the required fields are empty
                     if (!this.order.firstName || !this.order.lastName || !this.order.email || !this.order.address || !this.order.zip) {
-                            // Show error message if any field is empty
-                            this.checkoutFeedback = { message: "All fields must be filled in!", type: "error" };
-                        } else {
-                        // Hide error message if all fields are filled
+                        this.checkoutFeedback = { message: "All fields must be filled in!", type: "error" };
+                    } else {
                         this.checkoutFeedback = { message: "Order placed successfully! Redirecting back to home page...", type: "success" };
-
-                        //Setting a timeout when the user successfully places order to process it
                         setTimeout(() => {
                             this.checkoutFeedback = false;
                             this.checkoutVisible = false;
                             this.cart = [];
-                            // Reset order form
                             this.order = {
-                            firstName: '',
-                            lastName: '',
-                            email: '',
-                            phoneNumber: '',
-                            address: '',
-                            zip: null,
-                        };
+                                firstName: '',
+                                lastName: '',
+                                email: '',
+                                phoneNumber: '',
+                                address: '',
+                                zip: null,
+                            };
                         }, 2000);
+                        console.log("All fields validated, placing order"); 
+                        this.placeOrder(); 
                     }
                 },
-
                 //Function for processing an order details to the mongoDB
                 async placeOrder() {
+                    console.log("Cart data before mapping:", this.cart);
                     const orderDetails = {
                         user: {
                             firstName: this.order.firstName,
@@ -256,15 +276,15 @@
                             zip: this.order.zip,
                         },
                         orderedItems: this.cart.map(item => ({
-                            id: item.id,
-                            quantity: item.quantity,
+                            courseId: item._id,         
+                            subject: item.subject,    
+                            quantity: item.quantity,  
                         })),
                     };
-
-                    console.log("Placing order with details:", orderDetails); // Debug log for order details
-
+                    // Debugging purposes
+                    console.log("Placing order with details:", orderDetails);
                     try {
-                        // POST Order
+                        // Handling POST requests
                         const orderResponse = await fetch(`${this.serverBaseURL}/collections/orders`, {
                             method: "POST",
                             headers: {
@@ -273,10 +293,11 @@
                             body: JSON.stringify(orderDetails),
                         });
 
-                        console.log("Order response status:", orderResponse.status); // Debug log for status
+                        // Debugging the status
+                        console.log("Order response status:", orderResponse.status);
 
                         const orderResponseBody = await orderResponse.json();
-                        console.log("Order response body:", orderResponseBody); // Debug log for response body
+                        console.log("Order response body:", orderResponseBody);
 
                         if (orderResponse.ok) {
                             console.log("Order placed successfully. Updating course spaces...");
@@ -287,8 +308,9 @@
 
                                 console.log(`Updating course ID ${item.id} with new spaces: ${updatedSpaces}`); // Debug log for course update
 
+                                //PUT request to update course spaces after checkout is complete
                                 const updateResponse = await fetch(
-                                    `${this.serverBaseURL}/collections/courses/${item.id}`,
+                                    `${this.serverBaseURL}/collections/courses/${item._id}`,
                                     {
                                         method: "PUT",
                                         headers: {
@@ -297,12 +319,12 @@
                                         body: JSON.stringify({ spaces: updatedSpaces }),
                                     }
                                 );
-                                //Debugging purposes
+
                                 console.log("Course update response status:", updateResponse.status);
 
                                 if (!updateResponse.ok) {
-                                    const updateResponseBody = await updateResponse.json();
-                                    console.error("Error updating course spaces:", updateResponseBody);
+                                    const errorText = await updateResponse.text();  // Get the response as text to debug
+                                    console.error("Error updating course spaces:", errorText);
                                     throw new Error("Failed to update course spaces");
                                 }
                             }
@@ -310,7 +332,6 @@
                                 message: "Order placed successfully and courses updated!",
                                 type: "success",
                             };
-                            this.resetCheckout();
                         } else {
                             const errorResponse = await orderResponse.json();
                             console.error("Failed to place order:", errorResponse);
@@ -321,22 +342,11 @@
                         this.checkoutFeedback = { message: "Error placing order", type: "error" };
                     }
                 },
-                resetCheckout() {
-                    this.checkoutVisible = false;
-                    this.cart = [];
-                    this.order = {
-                        firstName: '',
-                        lastName: '',
-                        email: '',
-                        phoneNumber: '',
-                        address: '',
-                        zip: null,
-                    };
-                }
             },
             computed: {
                 //To return the total items in cart
                 cartItemCount() {
+                    // Log cart and quantities to ensure data is correct
                     return this.cart.reduce((total, item) => total + item.quantity, 0);
                 },
                 //Checking if the cart has any items at all
@@ -344,10 +354,9 @@
                     return this.cart.length === 0;
                 },
                 sortedCourses() {
-                    // First filter courses based on search input
+                    console.log("Sorted courses:", this.filteredCourses);
                     const filtered = this.filteredCourses;
 
-                    // Then sort the filtered results based on the selected sort option
                     if (this.sortBy) {
                         filtered.sort((a, b) => {
                             if (this.sortBy === 'price' || this.sortBy === 'spaces') {
@@ -377,6 +386,5 @@
             }
         });
     </script>
-    
 </body>
 </html>
