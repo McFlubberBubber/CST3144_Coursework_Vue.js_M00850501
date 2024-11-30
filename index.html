@@ -243,68 +243,85 @@
                         }, 2000);
                     }
                 },
+
+                //Function for processing an order details to the mongoDB
                 async placeOrder() {
                     const orderDetails = {
                         user: {
-                        firstName: this.order.firstName,
-                        lastName: this.order.lastName,
-                        email: this.order.email,
-                        phoneNumber: this.order.phoneNumber,
-                        address: this.order.address,
-                        zip: this.order.zip,
+                            firstName: this.order.firstName,
+                            lastName: this.order.lastName,
+                            email: this.order.email,
+                            phoneNumber: this.order.phoneNumber,
+                            address: this.order.address,
+                            zip: this.order.zip,
                         },
                         orderedItems: this.cart.map(item => ({
-                        id: item.id,
-                        quantity: item.quantity,
+                            id: item.id,
+                            quantity: item.quantity,
                         })),
                     };
+
+                    console.log("Placing order with details:", orderDetails); // Debug log for order details
+
                     try {
                         // POST Order
                         const orderResponse = await fetch(`${this.serverBaseURL}/collections/orders`, {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify(orderDetails),
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify(orderDetails),
                         });
 
+                        console.log("Order response status:", orderResponse.status); // Debug log for status
+
+                        const orderResponseBody = await orderResponse.json();
+                        console.log("Order response body:", orderResponseBody); // Debug log for response body
+
                         if (orderResponse.ok) {
-                        // Update Course Spaces
-                        for (const item of this.cart) {
-                            const updatedSpaces = item.spaces - item.quantity;
-                            
-                            const updateResponse = await fetch(
-                            `${this.serverBaseURL}/collections/courses/${item.id}`,
-                            {
-                                method: "PUT",
-                                headers: {
-                                "Content-Type": "application/json",
-                                },
-                                body: JSON.stringify({ spaces: updatedSpaces }),
-                            }
-                            );
-                            if (!updateResponse.ok) {
-                            throw new Error("Failed to update course spaces");
-                            }
-                        }
+                            console.log("Order placed successfully. Updating course spaces...");
 
-                        this.checkoutFeedback = {
-                            message: "Order placed successfully and courses updated!",
-                            type: "success",
-                        };
+                            // Update Course Spaces
+                            for (const item of this.cart) {
+                                const updatedSpaces = item.spaces - item.quantity;
 
-                        // Reset cart and form after successful checkout
-                        this.resetCheckout();
+                                console.log(`Updating course ID ${item.id} with new spaces: ${updatedSpaces}`); // Debug log for course update
+
+                                const updateResponse = await fetch(
+                                    `${this.serverBaseURL}/collections/courses/${item.id}`,
+                                    {
+                                        method: "PUT",
+                                        headers: {
+                                            "Content-Type": "application/json",
+                                        },
+                                        body: JSON.stringify({ spaces: updatedSpaces }),
+                                    }
+                                );
+                                //Debugging purposes
+                                console.log("Course update response status:", updateResponse.status);
+
+                                if (!updateResponse.ok) {
+                                    const updateResponseBody = await updateResponse.json();
+                                    console.error("Error updating course spaces:", updateResponseBody);
+                                    throw new Error("Failed to update course spaces");
+                                }
+                            }
+                            this.checkoutFeedback = {
+                                message: "Order placed successfully and courses updated!",
+                                type: "success",
+                            };
+                            this.resetCheckout();
                         } else {
-                        throw new Error("Failed to place order");
+                            const errorResponse = await orderResponse.json();
+                            console.error("Failed to place order:", errorResponse);
+                            this.checkoutFeedback = { message: `Error: ${errorResponse.message || "Order failed"}`, type: "error" };
                         }
                     } catch (error) {
-                        console.error(error);
+                        console.error("Exception occurred while placing the order:", error);
                         this.checkoutFeedback = { message: "Error placing order", type: "error" };
                     }
-                    },
-
-                    resetCheckout() {
+                },
+                resetCheckout() {
                     this.checkoutVisible = false;
                     this.cart = [];
                     this.order = {
@@ -315,8 +332,7 @@
                         address: '',
                         zip: null,
                     };
-                    }
-
+                }
             },
             computed: {
                 //To return the total items in cart
