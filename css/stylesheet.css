@@ -153,6 +153,7 @@
     transition: background-color 0.3s ease;
 }
 
+/* Hover effect for each course items 'add to cart' button */
 .courseItem button:hover {
     background-color: #23498a; 
 }
@@ -276,10 +277,12 @@
     border-bottom: 1px solid #ddd;
 }
 
+/* Adjusting paragraphs */
 .cartItem p {
     margin: 4px 0;
 }
 
+/* Styling each cart item's remove button */
 .cartItem button {
     background-color: #ff4c4c;
     color: white;
@@ -289,6 +292,7 @@
     cursor: pointer;
 }
 
+/* Hover effect for each cart item */
 .cartItem button:hover {
     background-color: #e04343;
 }
