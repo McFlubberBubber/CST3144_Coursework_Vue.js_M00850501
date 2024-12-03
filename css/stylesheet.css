@@ -158,12 +158,14 @@
     background-color: #23498a; 
 }
 
-/* Styling for the add to cart button being disabled */
-.courseItem button:disabled,
-.courseItem button.out-of-stock {
-    background-color: #ccc;
-    cursor: not-allowed;
+/* Disabled button or out-of-stock button */
+.courseItem button.out-of-stock,
+.courseItem button:disabled {
+    background-color: #ccc; 
+    cursor: not-allowed; 
+    color: #777;  
 }
+
 
 /* Footer styling */
 .footer {

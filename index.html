@@ -48,24 +48,25 @@
             </aside>
             
             <main class="coursesSection" v-if="!checkoutVisible">
-
-                <!-- Div for search bar -->
                 <div class="searchBar">
                     <input 
                         type="text" 
                         placeholder="Search for a course..." 
                         v-model="searchInput" 
-                        @input="delaySearch"
+                        @input="searchCourses"
                     />
                 </div>
             
                 <h2 v-text="subHeading" id="subHeadingItem"></h2> <br>
-                <!-- Display message when no results are available -->
-                <p v-if="noResults" class="no-courses-message">No courses available matching your search.</p>
             
-                <!-- Div to display the courses in a grid, only if there are courses -->
+                <!-- Display message when no results are available -->
+                <p v-if="noResults" class="no-courses-message">
+                    No courses available matching your search.
+                </p>
+            
+                <!-- Display the courses from the search -->
                 <div class="coursesGrid" v-if="courses.length > 0">
-                    <div v-for="course in sortedCourses" :key="course.id" class="courseItem">
+                    <div v-for="course in courses" :key="course.id" class="courseItem">
                         <div class="courseImage">
                             <img :src="course.courseImage" :alt="course.subject" />
                         </div>
@@ -88,42 +89,45 @@
                         </div>
                     </div>
                 </div>
-            </main>
+            </main>        
 
-            <!-- Checkout Form  -->
+            <!-- Checkout Form -->
             <div v-if="checkoutVisible" class="checkoutForm">
                 <h2>Checkout Form</h2>
 
                 <!-- Cart Items Display -->
                 <div v-if="cart.length > 0" class="cartItems">
                     <h3>Your Cart</h3>
-                    <div v-for="(item, index) in cart" :key="index" class="cartItem">
-                        <p><strong>{{ item.subject }}</strong></p>
+                    <!-- Loop through cart items -->
+                    <div v-for="item in cart" :key="item._id" class="cartItem">
+                        <h4>{{ item.subject }}</h4> <!-- This will show the course subject -->
                         <p>Price: £{{ item.price }}</p>
                         <p>Quantity: {{ item.quantity }}</p>
                         <button @click="removeFromCart(item)">Remove</button>
                     </div>
                     <br>
+                    
                     <!-- Total cost display -->
                     <div class="total-cost">
                         <h4>Total: £{{ calculateTotalCost }}</h4>
                     </div>
                 </div>
-                
 
-                <!-- If there are no items in the cart, a new button will appear for the user to go back to the main page -->
+                <!-- If there are no items in the cart, display continue shopping button -->
                 <button v-if="cartIsEmpty" @click="showCheckout">Continue Shopping</button> <br>
 
-                <!-- Checkout form -->
+                <!-- Checkout form fields -->
                 <p><strong>First Name: </strong><input v-model.trim="order.firstName"/></p>
                 <p><strong>Last Name: </strong><input v-model.trim="order.lastName"/></p>
                 <p><strong>Email: </strong><input v-model.trim="order.email"/></p>
                 <p><strong>Phone Number: </strong><input v-model.trim="order.phoneNumber"/></p>
                 <p><strong>Address: </strong><input v-model="order.address"/></p>
                 <p><strong>Zip / Postal Code:</strong><input v-model.number="order.zip" type="number"/></p>
-    
-                <!-- Button with checkout feedback to display status of order to the user (validation) -->
+
+                <!-- Place Order Button -->
                 <button v-on:click="submitForm($event)">Place Order</button>
+
+                <!-- Checkout Feedback Message -->
                 <p v-if="checkoutFeedback" :style="{ color: checkoutFeedback.type === 'success' ? 'green' : 'red' }" style="text-align: center;">
                     {{ checkoutFeedback.message }}
                 </p>
@@ -144,6 +148,7 @@
                 sitename: "Nateson's High School",
                 subHeading: "Order your tuition courses here!",
                 courses: [],
+                originalCourses: [],
                 searchInput: '',
                 noResults: false,
                 sortBy: '',
@@ -180,49 +185,54 @@
 
                 //Function to handle adding each course to cart 
                 addToCart(course) {
-                    console.log("Adding to cart:", course);
                     const courseId = course._id;
-                    const originalCourse = this.courses.find((c) => c._id === courseId);
+                    const originalCourse = this.courses.find(c => c._id === courseId);
 
                     if (originalCourse) {
-                        if (originalCourse.spaces > 0) {
-                            const cartItem = this.cart.find((c) => c._id === courseId);
-                            if (cartItem) {
-                                // Incrementing quantity in the checkout
+                        const availableSpaces = originalCourse.spaces;
+
+                        // Limit how many times the course can be added based on available spaces
+                        const cartItem = this.cart.find(c => c._id === courseId);
+
+                        if (cartItem) {
+                            if (cartItem.quantity < availableSpaces) {
+                                // If the course is already in the cart, increment quantity until it reaches the available spaces
                                 cartItem.quantity++;
                             } else {
-                                // Explicitly add the relevant properties (id, name, price, etc.)
-                                this.cart.push({ 
-                                    _id: course._id, 
-                                    name: course.name, 
-                                    price: course.price, 
-                                    quantity: 1 
-                                });
+                                // Prevent adding more if the cart already has the maximum allowed quantity
+                                this.checkoutFeedback = {
+                                    message: `You can only add up to ${availableSpaces} of this course to your cart.`,
+                                    type: "error",
+                                };
                             }
-                            originalCourse.spaces--;  
-                            console.log("Updated course spaces:", originalCourse.spaces);
                         } else {
-                            console.log("Course is out of stock.");
+                            // Add the course to the cart if not already in the cart
+                            this.cart.push({
+                                _id: course._id,
+                                subject: course.subject,
+                                price: course.price,
+                                quantity: 1,
+                            });
                         }
                     }
                 },
 
                 //Function to remove items from the checkout cart
                 removeFromCart(course) {
-                    const cartItem = this.cart.find(item => item._id === course._id);
+                    const cartItem = this.cart.find(c => c._id === course._id);
                     if (cartItem) {
-                        //Decreasing quantity
+                        // Decrease the quantity by 1
                         cartItem.quantity--;
-                        const originalCourse = this.courses.find(item => item._id === course._id);
 
-                        // Increase the spaces in the original course when the item is removed
-                        if (originalCourse) {
-                            originalCourse.spaces++;
+                        // If quantity becomes 0, remove the course from the cart entirely
+                        if (cartItem.quantity === 0) {
+                            this.cart = this.cart.filter(c => c._id !== course._id);
                         }
 
-                        // If the quantity of the item in the cart reaches 0, remove it
-                        if (cartItem.quantity === 0) {
-                            this.cart = this.cart.filter(item => item._id !== course._id);
+                        // Increase the spaces locally for this course
+                        const originalCourse = this.courses.find(c => c._id === course._id);
+                        if (originalCourse) {
+                            originalCourse.spaces++;
                         }
                     }
                 },
@@ -285,21 +295,7 @@
                         this.checkoutFeedback = { message: "All fields must be filled in!", type: "error" };  
                     } else {
                         //If the user passes all validation, then order gets processed
-                        this.checkoutFeedback = { message: "Order placed successfully! Redirecting back to home page...", type: "success" };
-                        setTimeout(() => {
-                            this.checkoutFeedback = false;
-                            this.checkoutVisible = false;
-                            this.cart = [];
-                            this.order = {
-                                firstName: '',
-                                lastName: '',
-                                email: '',
-                                phoneNumber: '',
-                                address: '',
-                                zip: null,
-                            };
-                        }, 2000);
-                        console.log("All fields validated, placing order");
+                        this.checkoutFeedback = { message: "Order placed successfully!", type: "success" };
                         this.placeOrder();
                     }
                 },
@@ -307,7 +303,7 @@
                 //Function for processing an order details to the mongoDB
                 async placeOrder() {
                     console.log("Cart data before mapping:", this.cart);
-                    //Setting the attributes to store
+
                     const orderDetails = {
                         user: {
                             firstName: this.order.firstName,
@@ -318,16 +314,16 @@
                             zip: this.order.zip,
                         },
                         orderedItems: this.cart.map(item => ({
-                            courseId: item._id,         
-                            subject: item.subject,    
-                            quantity: item.quantity,  
+                            courseId: item._id,
+                            subject: item.subject,
+                            quantity: item.quantity,
                         })),
                     };
 
-                    // Debugging purposes
                     console.log("Placing order with details:", orderDetails);
+
                     try {
-                        // Handling POST requests
+                        // Handle POST request to place the order
                         const orderResponse = await fetch(`${this.serverBaseURL}/collections/orders`, {
                             method: "POST",
                             headers: {
@@ -336,7 +332,6 @@
                             body: JSON.stringify(orderDetails),
                         });
 
-                        // Debugging the status
                         console.log("Order response status:", orderResponse.status);
 
                         const orderResponseBody = await orderResponse.json();
@@ -345,47 +340,88 @@
                         if (orderResponse.ok) {
                             console.log("Order placed successfully. Updating course spaces...");
 
-                            // Update Course Spaces
+                            // Loop over cart items and update spaces in backend
                             for (const item of this.cart) {
-                                const updatedSpaces = item.spaces - item.quantity;
+                                const originalCourse = this.courses.find(c => c._id === item._id);
+                                if (originalCourse) {
+                                    let currentSpaces = Number(originalCourse.spaces);
+                                    if (isNaN(currentSpaces)) {
+                                        currentSpaces = 0;  // Default to 0 if spaces is invalid
+                                    }
 
-                                console.log(`Updating course ID ${item.id} with new spaces: ${updatedSpaces}`); 
+                                    const updatedSpaces = currentSpaces - item.quantity;
 
-                                //PUT request to update course spaces after checkout is complete
-                                const updateResponse = await fetch(
-                                    `${this.serverBaseURL}/collections/courses/${item._id}`,
-                                    {
+                                    // Ensure spaces don't go negative
+                                    if (updatedSpaces < 0) {
+                                        const courseName = originalCourse ? originalCourse.name || originalCourse.subject || 'Unknown Course' : 'Unknown Course';
+                                        console.error(`Error: Not enough spaces for course ${courseName}`);
+                                        this.checkoutFeedback = {
+                                            message: `Error: Not enough spaces for course ${courseName}`,
+                                            type: "error",
+                                        };
+                                        return;
+                                    }
+
+                                    // PUT request to update spaces
+                                    const updateResponse = await fetch(`${this.serverBaseURL}/collections/courses/${item._id}`, {
                                         method: "PUT",
                                         headers: {
                                             "Content-Type": "application/json",
                                         },
                                         body: JSON.stringify({ spaces: updatedSpaces }),
-                                    }
-                                );
-                                console.log("Course update response status:", updateResponse.status);
+                                    });
 
-                                if (!updateResponse.ok) {
-                                    const errorText = await updateResponse.text();  // Get the response as text to debug
-                                    console.error("Error updating course spaces:", errorText);
-                                    throw new Error("Failed to update course spaces");
+                                    if (!updateResponse.ok) {
+                                        const updateError = await updateResponse.json();
+                                        console.error("Error updating spaces:", updateError);
+                                        this.checkoutFeedback = {
+                                            message: "Error updating spaces. Please try again.",
+                                            type: "error",
+                                        };
+                                        return;
+                                    }
                                 }
                             }
-                            //Informing user the order has been processed
+
+                            // Re-fetch the courses to ensure frontend is updated
+                            await this.fetchProducts();  // Fetch updated courses to reflect updated spaces
+
+                            // Inform the user of a successful order
                             this.checkoutFeedback = {
-                                message: "Order placed successfully and courses updated!",
+                                message: "Redirecting back to home page!",
                                 type: "success",
                             };
+
+                            // Clear cart and reset checkout form after successful order
+                            setTimeout(() => {
+                                this.courses = [...this.originalCourses];
+                                this.checkoutVisible = false;
+                                this.cart = [];
+                                this.order = {
+                                    firstName: '',
+                                    lastName: '',
+                                    email: '',
+                                    phoneNumber: '',
+                                    address: '',
+                                    zip: null,
+                                };
+                                this.checkoutFeedback = false;
+                            }, 500);
+
                         } else {
-                            //If any errors occur, it will be logged and user will be notified
                             const errorResponse = await orderResponse.json();
                             console.error("Failed to place order:", errorResponse);
-                            this.checkoutFeedback = { message: `Error: ${errorResponse.message || "Order failed"}`, type: "error" };
+                            this.checkoutFeedback = {
+                                message: `Error: ${errorResponse.message || "Order failed"}`,
+                                type: "error",
+                            };
                         }
                     } catch (error) {
                         console.error("Exception occurred while placing the order:", error);
                         this.checkoutFeedback = { message: "Error placing order", type: "error" };
                     }
                 },
+
                 // Function to handle searching for courses
                 async searchCourses() {
                     const query = this.searchInput.trim();
@@ -393,18 +429,31 @@
                     // If search input is empty, show all courses and reset any error state
                     if (!query) {
                         this.courses = [...this.originalCourses];  
-                        this.noResults = false; 
+                        this.noResults = false;
                         return;
                     }
+
                     try {
-                        //Fetching courses that match the query
+                        // Fetching courses that match the query
                         const response = await fetch(`${this.serverBaseURL}/collections/courses/search/${query}`);
                         if (response.ok) {
                             const courses = await response.json();
+
+                            // Update the frontend courses list with the fetched courses
                             this.courses = courses.map(course => ({
                                 ...course,
                                 courseImage: `${this.imagesBaseURL}/images/${course.courseImage}`,
+                                spaces: Number(course.spaces),  // Convert spaces to an integer
                             }));
+
+                            // Adjust spaces based on the cart for the search results
+                            this.courses.forEach(course => {
+                                const cartItem = this.cart.find(item => item._id === course._id);
+                                if (cartItem) {
+                                    // Decrease the spaces in the search result based on what's in the cart
+                                    course.spaces = Math.max(course.spaces - cartItem.quantity, 0); // Prevent negative spaces
+                                }
+                            });
 
                             // If no courses are found, show only the "No results" message
                             if (this.courses.length === 0) {
