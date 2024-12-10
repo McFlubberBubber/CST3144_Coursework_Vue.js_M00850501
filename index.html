@@ -66,7 +66,7 @@
             
                 <!-- Display the courses from the search -->
                 <div class="coursesGrid" v-if="courses.length > 0">
-                    <div v-for="course in courses" :key="course.id" class="courseItem">
+                    <div v-for="course in sortedCourses" :key="course.id" class="courseItem">
                         <div class="courseImage">
                             <img :src="course.courseImage" :alt="course.subject" />
                         </div>
@@ -227,12 +227,6 @@
                         // If quantity becomes 0, remove the course from the cart entirely
                         if (cartItem.quantity === 0) {
                             this.cart = this.cart.filter(c => c._id !== course._id);
-                        }
-
-                        // Increase the spaces locally for this course
-                        const originalCourse = this.courses.find(c => c._id === course._id);
-                        if (originalCourse) {
-                            originalCourse.spaces++;
                         }
                     }
                 },
